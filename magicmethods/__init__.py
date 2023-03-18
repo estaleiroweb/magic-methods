@@ -1,2 +1,2 @@
 from .mm import *
-from version import version
+from .version import version

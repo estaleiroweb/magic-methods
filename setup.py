@@ -1,52 +1,65 @@
-import os
 import subprocess
-import setuptools
-
-project_name = 'magic-methods'
-project_path = project_name.replace('-', '')
-licence = 'MIT License'
-sDir = os.path.abspath(__file__ + '/..')
+import sys
+import os
+from setuptools import setup, find_packages
 
 
 def getVersion() -> str:
-    assert os.path.isfile(f'{sDir}/{project_path}/version.py')
+    assert os.path.isfile(f'{rootdir}/{projectPath}/version.py')
     try:
-        ver = (
-            subprocess.run(['git', 'describe', '--tags'], stdout=subprocess.PIPE)
-            .stdout.decode('utf-8')
-            .strip()
-        )
-        if '-' in ver:
-            # when not on tag, git describe outputs: '1.3.3-22-gdf81228'
-            # pip has gotten strict with version numbers
-            # so change it to: '1.3.3+22.git.gdf81228'
-            # See: https://peps.python.org/pep-0440/#local-version-segments
-            v, i, s = ver.split('-')
-            ver = v + '+' + i + '.git.' + s
-
-        print(ver)
-        assert '-' not in ver
-        assert '.' in ver
-
-        with open(f'{sDir}/{project_path}/VERSION', 'w', encoding='utf-8') as fh:
-            fh.write('%s\n' % ver)
+        lpros = ['git', 'describe', '--tags']
+        sb = subprocess.run(lpros, stdout=subprocess.PIPE)
+        ver = sb.stdout.decode('utf-8').strip()
     except:
-        return '0.0.1'
+        ver = ''
+    if ver == '':
+        ver = '0.0.1'
+    if '-' in ver:
+        # when not on tag, git describe outputs: '1.3.3-22-gdf81228'
+        # pip has gotten strict with version numbers
+        # so change it to: '1.3.3+22.git.gdf81228'
+        # See: https://peps.python.org/pep-0440/#local-version-segments
+        v, i, s = ver.split('-')
+        ver = v + '+' + i + '.git.' + s
+
+    assert '-' not in ver
+    assert '.' in ver
+    with open(f'{rootdir}/{projectPath}/VERSION', 'w', encoding='utf-8') as fh:
+        fh.write('%s\n' % ver)
     return ver
 
 
+def getPackages() -> list:
+    packages = []
+    for dirname, dirnames, filenames in os.walk(rootdir):
+        if dirname != rootdir and '__init__.py' in filenames:
+            packages.append(os.path.basename(dirname))
+    return packages
+
+
 def getRequirements() -> list[str]:
-    with open(f'{sDir}/requirement.txt', 'r') as file:
+    with open(f'{rootdir}/requirement.txt', 'r') as file:
         return [line.strip() for line in file]
 
 
 def getReadme() -> str:
-    with open(f'{sDir}/README.md', 'r', encoding='utf-8') as fh:
+    with open(f'{rootdir}/README.md', 'r', encoding='utf-8') as fh:
         return fh.read()
 
 
-dSetup = {
-    'name': project_name,
+def getLicence() -> str:
+    with open(f'{rootdir}/LICENCE', 'r', encoding='utf-8') as fh:
+        return fh.readline().lstrip().rstrip()
+
+
+rootdir = os.path.abspath(__file__ + '/..')
+os.chdir(rootdir)
+
+projectName = os.path.basename(rootdir)
+projectPath = projectName.replace('-', '')
+licence = getLicence()
+dictSetup = {
+    'name': projectName,
     'version': getVersion(),
     'license': licence,
     'author': 'Helbert Braga Fernandes',
@@ -54,7 +67,7 @@ dSetup = {
     'description': u'All Magic Methods Implement. You can easyly to implement all magic methods or part of them',
     'long_description': getReadme(),
     'long_description_content_type': 'text/markdown',
-    'url': f'https://github.com/HelbertFernandes/{project_name}',
+    'url': 'https://github.com/estaleiroweb/magic-methods',
     'include_package_data': True,
     'keywords': 'magic methods class',
     'classifiers': [
@@ -70,10 +83,12 @@ dSetup = {
         # 'requests >= 2.25.1',
         # 'apache-libcloud >= 3.3.1',
     ],
-    # entry_points={'console_scripts': [f'{project_path} = {project_path}.main:main']},
-    'package_dir': {project_path: project_path},
-    'packages': [project_path] + setuptools.find_packages(),
-    'package_data': {project_path: ['VERSION']},
+    'packages': find_packages(),
+    # 'packages': getPackages(),
+    # 'package_data': {projectPath: ['VERSION']},
+    # 'package_dir': {'magicmethods':'./magicmethods'},
+    # 'entry_points':{'console_scripts': [f'{projectPath} = {projectPath}.main:main']},
 }
-
-setuptools.setup(**dSetup)
+if len(sys.argv) < 2:
+    sys.argv.append('build')
+setup(**dictSetup)
