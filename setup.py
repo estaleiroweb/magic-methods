@@ -20,7 +20,7 @@ def getVersion() -> str:
         # so change it to: '1.3.3+22.git.gdf81228'
         # See: https://peps.python.org/pep-0440/#local-version-segments
         v, i, s = ver.split('-')
-        ver = v + '+' + i + '.git.' + s
+        ver = v.replace('v','')
 
     assert '-' not in ver
     assert '.' in ver
@@ -90,5 +90,5 @@ dictSetup = {
     # 'entry_points':{'console_scripts': [f'{projectPath} = {projectPath}.main:main']},
 }
 if len(sys.argv) < 2:
-    sys.argv.append('build')
+    sys.argv.append('bdist_wheel')
 setup(**dictSetup)
